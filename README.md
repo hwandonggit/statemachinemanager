@@ -1,0 +1,1 @@
+workflow template for distributed workers with Akka Cluster.
