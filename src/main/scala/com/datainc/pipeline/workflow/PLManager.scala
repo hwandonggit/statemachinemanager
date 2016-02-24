@@ -1,4 +1,4 @@
-package com.fulgent.pipeline.workflow
+package com.datainc.pipeline.workflow
 
 import akka.actor.ActorLogging
 import akka.actor.ActorRef

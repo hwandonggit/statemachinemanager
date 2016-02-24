@@ -1,4 +1,4 @@
-package com.fulgent.pipeline.workflow
+package com.datainc.pipeline.workflow
 
 import java.util.UUID
 import scala.concurrent.duration._

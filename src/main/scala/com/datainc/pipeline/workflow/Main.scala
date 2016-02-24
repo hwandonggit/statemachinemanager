@@ -1,4 +1,4 @@
-package com.fulgent.pipeline.workflow
+package com.datainc.pipeline.workflow
 
 import scala.concurrent.duration.DurationInt
 

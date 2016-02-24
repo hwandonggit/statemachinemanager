@@ -1,4 +1,4 @@
-package com.fulgent.pipeline.workflow
+package com.datainc.pipeline.workflow
 
 object ManagerWorkerProtocol {
   // Messages from Workers

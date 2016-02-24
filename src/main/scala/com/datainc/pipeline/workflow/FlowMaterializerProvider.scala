@@ -1,5 +1,4 @@
-package com.fulgent.pipeline.workflow
-
+package com.datainc.pipeline.workflow
 import akka.stream._
 
 trait FlowMaterializerProvider {

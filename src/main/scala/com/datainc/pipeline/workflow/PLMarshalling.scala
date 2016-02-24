@@ -1,4 +1,4 @@
-package com.fulgent.pipeline.workflow
+package com.datainc.pipeline.workflow
 
 import akka.http.scaladsl.marshallers.sprayjson._
 import spray.json._

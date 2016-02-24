@@ -1,8 +1,10 @@
-package com.fulgent.pipeline.workflow
+package com.datainc.pipeline.workflow
 
-class Dataguard extends Worker() {
+class Annotator extends Worker() {
   override def working: Receive = {
-    case DataValidation(result) =>
+    case Annotation(result) =>
+      // call bam2variants with the following parameters: 
+      // bam2variants accesionID panelbase genelist testID customerTestName gender
       log.info("TBD.")
 
     case WorkComplete(result) =>
