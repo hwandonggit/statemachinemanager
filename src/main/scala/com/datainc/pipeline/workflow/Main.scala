@@ -23,9 +23,9 @@ import akka.persistence.journal.leveldb.SharedLeveldbStore
 import akka.util.Timeout
 
 object Main extends App
-  with TodoStorage
+  with TodoManager
   with TodoRoutes
-  with TodoTable {
+  with TxsTable {
   val port = Properties.envOrElse("PORT", "8080").toInt
   implicit val system = ActorSystem()
   implicit val executor = system.dispatcher

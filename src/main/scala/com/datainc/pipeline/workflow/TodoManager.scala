@@ -11,18 +11,21 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.Cluster
 import akka.persistence.PersistentActor
 
-object Manager {
+object TodoManager {
 
   val ResultsTopic = "results"
 
   def props(workTimeout: FiniteDuration): Props =
-    Props(classOf[Manager], workTimeout)
+    Props(classOf[TodoManager], workTimeout)
 
   case class Ack(workId: String)
 
   private sealed trait WorkerStatus
+
   private case object Idle extends WorkerStatus
+
   private case class Busy(workId: String, deadline: Deadline) extends WorkerStatus
+
   private case class WorkerState(ref: ActorRef, status: WorkerStatus)
 
   private case object CleanupTick
@@ -30,8 +33,9 @@ object Manager {
 }
 
 // how does Manager manage txs and state, in a Map!
-class Manager(workTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
-  import PLManager._
+class TodoManager(workTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
+
+  import TodoManager._
   import WorkState._
 
   val mediator = DistributedPubSub(context.system).mediator
@@ -40,7 +44,7 @@ class Manager(workTimeout: FiniteDuration) extends PersistentActor with ActorLog
   // persistenceId must include cluster role to support multiple masters
   override def persistenceId: String = Cluster(context.system).selfRoles.find(_.startsWith("backend-")) match {
     case Some(role) ⇒ role + "-master"
-    case None       ⇒ "master"
+    case None ⇒ "master"
   }
 
   // workers state is not event sourced
@@ -50,6 +54,7 @@ class Manager(workTimeout: FiniteDuration) extends PersistentActor with ActorLog
   private var workState = WorkState.empty
 
   import context.dispatcher
+
   val cleanupTask = context.system.scheduler.schedule(workTimeout / 2, workTimeout / 2,
     self, CleanupTick)
 
@@ -76,7 +81,7 @@ class Manager(workTimeout: FiniteDuration) extends PersistentActor with ActorLog
     case MasterWorkerProtocol.WorkerRequestsWork(workerId) =>
       if (workState.hasWork) {
         workers.get(workerId) match {
-          case Some(s @ WorkerState(_, Idle)) =>
+          case Some(s@WorkerState(_, Idle)) =>
             val work = workState.nextWork
             persist(WorkStarted(work.workId)) { event =>
               workState = workState.updated(event)
@@ -131,7 +136,7 @@ class Manager(workTimeout: FiniteDuration) extends PersistentActor with ActorLog
       }
 
     case CleanupTick =>
-      for ((workerId, s @ WorkerState(_, Busy(workId, timeout))) ← workers) {
+      for ((workerId, s@WorkerState(_, Busy(workId, timeout))) ← workers) {
         if (timeout.isOverdue) {
           log.info("Work timed out: {}", workId)
           workers -= workerId
@@ -148,13 +153,13 @@ class Manager(workTimeout: FiniteDuration) extends PersistentActor with ActorLog
       // could pick a few random instead of all
       workers.foreach {
         case (_, WorkerState(ref, Idle)) => ref ! MasterWorkerProtocol.WorkIsReady
-        case _                           => // busy
+        case _ => // busy
       }
     }
 
   def changeWorkerToIdle(workerId: String, workId: String): Unit =
     workers.get(workerId) match {
-      case Some(s @ WorkerState(_, Busy(`workId`, _))) ⇒
+      case Some(s@WorkerState(_, Busy(`workId`, _))) ⇒
         workers += (workerId -> s.copy(status = Idle))
       case _ ⇒
       // ok, might happen after standby recovery, worker state is not persisted

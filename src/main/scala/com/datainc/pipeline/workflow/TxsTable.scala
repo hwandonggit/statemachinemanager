@@ -5,12 +5,12 @@ trait TxsTable extends DatabaseConfig {
   import driver.api._
 
   class Todos(tag: Tag) extends Table[Todo](tag, "todos") {
-    def id = column[String]("id", O.PrimaryKey)
-    def title = column[String]("title")
+    def txsId = column[String]("txsId", O.PrimaryKey)
+    def state = column[Int]("state")
     def completed = column[Boolean]("completed")
-    def order = column[Int]("order")
+    def path = column[String]("path")
 
-    def * = (id, title, completed, order) <> ((Todo.apply _).tupled, Todo.unapply)
+    def * = (txsId, state, completed, path) <> ((Todo.apply _).tupled, Todo.unapply)
   }
 
   protected val todos = TableQuery[Todos]

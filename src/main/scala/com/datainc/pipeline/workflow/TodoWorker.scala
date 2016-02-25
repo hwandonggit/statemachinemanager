@@ -15,10 +15,10 @@ import akka.actor.SupervisorStrategy.Restart
 import akka.actor.ActorInitializationException
 import akka.actor.DeathPactException
 
-object Worker {
+object TodoWorker {
 
   def props(clusterClient: ActorRef, workExecutorProps: Props, registerInterval: FiniteDuration = 10.seconds): Props =
-    Props(classOf[Worker], clusterClient, workExecutorProps, registerInterval)
+    Props(classOf[TodoWorker], clusterClient, workExecutorProps, registerInterval)
 
   case class WorkComplete(result: Any)
 }

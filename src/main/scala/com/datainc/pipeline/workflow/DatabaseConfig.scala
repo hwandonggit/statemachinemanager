@@ -9,7 +9,7 @@ trait DatabaseConfig {
 
   import driver.api._
 
-  def db = Database.forConfig("mysqldb")
+  def db = Database.forConfig("pipeline")
   //def dbOracle = Database.forConfig("fbio")
   //val url = "jdbc:oracle:thin:@//maui:1521/xe"
   //val dbOracle = Database.forURL(url, driver = "net.sourceforge.jtds.jdbc.Driver")

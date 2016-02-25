@@ -1,0 +1,5 @@
+create table txstable (txsId VARCHAR(20), state INTEGER, completed CHAR(1), path VARCHAR(40));
+
+CREATE USER 'developer'@'localhost' IDENTIFIED BY 'pass1234';
+
+GRANT ALL PRIVILEGES ON *.* TO 'developer'@'localhost'WITH GRANT OPTION;
