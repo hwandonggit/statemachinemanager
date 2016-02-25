@@ -11,13 +11,12 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.Cluster
 import akka.persistence.PersistentActor
 
-// why object here?
-object PLManager {
+object Manager {
 
   val ResultsTopic = "results"
 
   def props(workTimeout: FiniteDuration): Props =
-    Props(classOf[PLManager], workTimeout)
+    Props(classOf[Manager], workTimeout)
 
   case class Ack(workId: String)
 
@@ -30,8 +29,8 @@ object PLManager {
 
 }
 
-// how does PLManager manage txs and state, in a Map!
-class PLManager(workTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
+// how does Manager manage txs and state, in a Map!
+class Manager(workTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
   import PLManager._
   import WorkState._
 
@@ -120,12 +119,12 @@ class PLManager(workTimeout: FiniteDuration) extends PersistentActor with ActorL
     case work: Work =>
       // idempotent
       if (workState.isAccepted(work.workId)) {
-        sender() ! PLManager.Ack(work.workId)
+        sender() ! Manager.Ack(work.workId)
       } else {
         log.info("Accepted work: {}", work.workId)
         persist(WorkAccepted(work)) { event ⇒
           // Ack back to original sender
-          sender() ! PLManager.Ack(work.workId)
+          sender() ! Manager.Ack(work.workId)
           workState = workState.updated(event)
           notifyWorkers()
         }

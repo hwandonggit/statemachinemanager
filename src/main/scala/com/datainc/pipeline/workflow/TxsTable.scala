@@ -1,6 +1,6 @@
 package com.datainc.pipeline.workflow
 
-trait TodoTable extends DatabaseConfig {
+trait TxsTable extends DatabaseConfig {
 
   import driver.api._
 

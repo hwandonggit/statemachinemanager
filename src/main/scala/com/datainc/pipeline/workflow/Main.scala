@@ -22,27 +22,25 @@ import akka.persistence.journal.leveldb.SharedLeveldbJournal
 import akka.persistence.journal.leveldb.SharedLeveldbStore
 import akka.util.Timeout
 
-object Main {
+object Main extends App
+  with TodoStorage
+  with TodoRoutes
+  with TodoTable {
+  val port = Properties.envOrElse("PORT", "8080").toInt
+  implicit val system = ActorSystem()
+  implicit val executor = system.dispatcher
+  implicit val materializer = ActorMaterializer()
 
-  def main(args: Array[String]): Unit = {
-    if (args.isEmpty) {
-      startBackend(2551, "backend")
-      Thread.sleep(5000)
-      startBackend(2552, "backend")
-      startWorker(0)
-      Thread.sleep(5000)
-      startFrontend(0)
-    } else {
-      val port = args(0).toInt
-      if (2000 <= port && port <= 2999)
-        startBackend(port, "backend")
-      else if (3000 <= port && port <= 3999)
-        startFrontend(port)
-      else
-        startWorker(port)
-    }
+  //  import driver.api._
+  //  val setupAction: DBIO[Unit] = DBIO.seq(todos.schema.create)
+  //  Await.result(db.run(setupAction), Duration.Inf)
 
-  }
+  Http(system).bindAndHandle(routes, "0.0.0.0", port = port)
+    .foreach(binding => system.log.info("Bound to " + binding.localAddress))
+
+  startBackend(2551, "backend")
+  startBackend(2552, "backend")
+  startWorker(0)
 
   def workTimeout = 10.seconds
 
@@ -57,20 +55,11 @@ object Main {
 
     system.actorOf(
       ClusterSingletonManager.props(
-        PLManager.props(workTimeout),
+        Manager.props(workTimeout),
         PoisonPill,
         ClusterSingletonManagerSettings(system).withRole(role)),
       "master")
 
-  }
-
-  def startFrontend(port: Int): Unit = {
-    val conf = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port).
-      withFallback(ConfigFactory.load())
-    val system = ActorSystem("ClusterSystem", conf)
-    val frontend = system.actorOf(Props[Frontend], "frontend")
-    system.actorOf(Props(classOf[WorkProducer], frontend), "producer")
-    system.actorOf(Props[WorkResultConsumer], "consumer")
   }
 
   def startWorker(port: Int): Unit = {

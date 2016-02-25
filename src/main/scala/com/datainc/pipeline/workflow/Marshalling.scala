@@ -3,7 +3,7 @@ package com.datainc.pipeline.workflow
 import akka.http.scaladsl.marshallers.sprayjson._
 import spray.json._
 
-trait PLMarshalling extends SprayJsonSupport
+trait Marshalling extends SprayJsonSupport
     with FlowMaterializerProvider
     with DefaultJsonProtocol {
 
