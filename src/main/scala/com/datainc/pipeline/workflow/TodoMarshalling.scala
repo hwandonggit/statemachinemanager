@@ -13,7 +13,7 @@ trait TodoMarshalling extends SprayJsonSupport
     def read(json: JsValue) = standardTodoFormat.read(json)
     def write(todo: Todo) = {
       val fields = standardTodoFormat.write(todo).asJsObject.fields
-      JsObject(fields.updated("url", JsString(baseUrl + '/' + todo.id)))
+      JsObject(fields.updated("url", JsString(baseUrl + '/' + todo.txsId)))
     }
   }
 
