@@ -1,22 +1,26 @@
 package com.datainc.pipeline.workflow
 
-import akka.actor.ActorLogging
-import akka.actor.ActorRef
+import akka.actor.{ActorSystem, ActorLogging, ActorRef, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator
 import scala.concurrent.duration.Deadline
 import scala.concurrent.duration.FiniteDuration
-import akka.actor.Props
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.Cluster
 import akka.persistence.PersistentActor
 
-object TodoManager {
+trait TodoManager {
+  implicit val system: ActorSystem
+
+  lazy val todoStorage: ActorRef = system.actorOf(Props(new TodoManagerActor))
+}
+
+object TodoManagerActor {
 
   val ResultsTopic = "results"
 
   def props(workTimeout: FiniteDuration): Props =
-    Props(classOf[TodoManager], workTimeout)
+    Props(classOf[TodoManagerActor], workTimeout)
 
   case class Ack(workId: String)
 
@@ -33,7 +37,7 @@ object TodoManager {
 }
 
 // how does Manager manage txs and state, in a Map!
-class TodoManager(workTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
+class TodoManagerActor(workTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
 
   import TodoManager._
   import WorkState._

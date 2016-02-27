@@ -23,38 +23,38 @@ trait TodoRoutes extends TodoMarshalling
       pathPrefix("todos") {
         pathEnd {
           get {
-            onSuccess(todoStorage ? TodoStorageActor.Get) { todos =>
+            onSuccess(todoStorage ? TodoManagerActor.Get) { todos =>
               complete(StatusCodes.OK, todos.asInstanceOf[Iterable[Todo]])
             }
           } ~
             post {
               entity(as[TodoUpdate]) { update =>
-                onSuccess(todoStorage ? TodoStorageActor.Add(update)) { todo =>
+                onSuccess(todoStorage ? TodoManagerActor.Add(update)) { todo =>
                   complete(StatusCodes.OK, todo.asInstanceOf[Todo])
                 }
               }
             } ~
             delete {
-              onSuccess(todoStorage ? TodoStorageActor.Clear) { _ =>
+              onSuccess(todoStorage ? TodoManagerActor.Clear) { _ =>
                 complete(StatusCodes.OK)
               }
             }
         } ~ {
           path(Segment) { id =>
             get {
-              onSuccess(todoStorage ? TodoStorageActor.Get(id)) { todo =>
+              onSuccess(todoStorage ? TodoManagerActor.Get(id)) { todo =>
                 complete(StatusCodes.OK, todo.asInstanceOf[Todo])
               }
             } ~
               patch {
                 entity(as[TodoUpdate]) { update =>
-                  onSuccess(todoStorage ? TodoStorageActor.Update(id, update)) { todo =>
+                  onSuccess(todoStorage ? TodoManagerActor.Update(id, update)) { todo =>
                     complete(StatusCodes.OK, todo.asInstanceOf[Todo])
                   }
                 }
               } ~
               delete {
-                onSuccess(todoStorage ? TodoStorageActor.Delete(id)) { _ =>
+                onSuccess(todoStorage ? TodoManagerActor.Delete(id)) { _ =>
                   complete(StatusCodes.OK)
                 }
               }
