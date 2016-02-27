@@ -3,6 +3,8 @@ package com.datainc.pipeline.workflow
 import akka.actor.{ActorSystem, ActorLogging, ActorRef, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator
+import com.datainc.pipeline.workflow.TodoManagerActor.{Busy, Idle, WorkerState, CleanupTick}
+import scala.concurrent.duration._
 import scala.concurrent.duration.Deadline
 import scala.concurrent.duration.FiniteDuration
 import akka.cluster.client.ClusterClientReceptionist
@@ -12,7 +14,7 @@ import akka.persistence.PersistentActor
 trait TodoManager {
   implicit val system: ActorSystem
 
-  lazy val todoStorage: ActorRef = system.actorOf(Props(new TodoManagerActor))
+  lazy val todoStorage: ActorRef = system.actorOf(Props(new TodoManagerActor(10.seconds)))
 }
 
 object TodoManagerActor {
@@ -23,6 +25,20 @@ object TodoManagerActor {
     Props(classOf[TodoManagerActor], workTimeout)
 
   case class Ack(workId: String)
+
+  sealed trait Command
+
+  case object Get extends Command
+
+  case class Get(id: String) extends Command
+
+  case class Add(todo: TodoUpdate) extends Command
+
+  case class Update(id: String, todo: TodoUpdate) extends Command
+
+  case class Delete(id: String) extends Command
+
+  case object Clear extends Command
 
   private sealed trait WorkerStatus
 
@@ -39,7 +55,6 @@ object TodoManagerActor {
 // how does Manager manage txs and state, in a Map!
 class TodoManagerActor(workTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
 
-  import TodoManager._
   import WorkState._
 
   val mediator = DistributedPubSub(context.system).mediator
@@ -109,7 +124,7 @@ class TodoManagerActor(workTimeout: FiniteDuration) extends PersistentActor with
         changeWorkerToIdle(workerId, workId)
         persist(WorkCompleted(workId, result)) { event ⇒
           workState = workState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(ResultsTopic, WorkResult(workId, result))
+          mediator ! DistributedPubSubMediator.Publish(TodoManagerActor.ResultsTopic, WorkResult(workId, result))
           // Ack back to original sender
           sender ! MasterWorkerProtocol.Ack(workId)
         }
@@ -128,12 +143,12 @@ class TodoManagerActor(workTimeout: FiniteDuration) extends PersistentActor with
     case work: Work =>
       // idempotent
       if (workState.isAccepted(work.workId)) {
-        sender() ! Manager.Ack(work.workId)
+        sender() ! TodoManagerActor.Ack(work.workId)
       } else {
         log.info("Accepted work: {}", work.workId)
         persist(WorkAccepted(work)) { event ⇒
           // Ack back to original sender
-          sender() ! Manager.Ack(work.workId)
+          sender() ! TodoManagerActor.Ack(work.workId)
           workState = workState.updated(event)
           notifyWorkers()
         }

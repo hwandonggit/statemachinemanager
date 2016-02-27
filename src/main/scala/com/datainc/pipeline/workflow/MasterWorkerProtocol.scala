@@ -1,6 +1,6 @@
 package com.datainc.pipeline.workflow
 
-object ManagerWorkerProtocol {
+object MasterWorkerProtocol {
   // Messages from Workers
   case class RegisterWorker(workerId: String)
   case class WorkerRequestsWork(workerId: String)

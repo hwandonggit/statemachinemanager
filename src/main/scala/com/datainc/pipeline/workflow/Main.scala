@@ -1,6 +1,7 @@
 package com.datainc.pipeline.workflow
 
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.typesafe.config.ConfigFactory
 
@@ -35,7 +36,7 @@ object Main extends App
   with TxsTable {
   val port = Properties.envOrElse("PORT", "8080").toInt
   implicit val system = ActorSystem()
-  implicit val executor = system.dispatcher
+//  implicit val executor = system.dispatcher
   implicit val materializer = ActorMaterializer()
 
   //  import driver.api._
@@ -101,11 +102,11 @@ object Main extends App
       case _ =>
         system.log.error("Shared journal not started at {}", path)
         system.terminate()
-    }
+    } (dispatcher)
     f.onFailure {
       case _ =>
         system.log.error("Lookup of shared journal at {} timed out", path)
         system.terminate()
-    }
+    } (dispatcher)
   }
 }

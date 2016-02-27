@@ -1,6 +1,8 @@
 package com.datainc.pipeline.workflow
 
 import java.util.UUID
+import com.datainc.pipeline.workflow.TodoWorker.WorkComplete
+
 import scala.concurrent.duration._
 import akka.actor.Actor
 import akka.actor.ActorLogging
@@ -23,9 +25,8 @@ object TodoWorker {
   case class WorkComplete(result: Any)
 }
 
-class Worker(clusterClient: ActorRef, workExecutorProps: Props, registerInterval: FiniteDuration)
+class TodoWorker(clusterClient: ActorRef, workExecutorProps: Props, registerInterval: FiniteDuration)
     extends Actor with ActorLogging {
-  import Worker._
   import MasterWorkerProtocol._
 
   val workerId = UUID.randomUUID().toString

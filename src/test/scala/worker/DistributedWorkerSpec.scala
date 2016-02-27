@@ -59,7 +59,7 @@ object DistributedWorkerSpec {
 
         val n2 = n * n
         val result = s"$n * $n = $n2"
-        sender() ! Worker.WorkComplete(result)
+        sender() ! TodoWorker.WorkComplete(result)
     }
   }
 }
@@ -115,7 +115,7 @@ class DistributedWorkerSpec(_system: ActorSystem)
 
     backendSystem.actorOf(
       ClusterSingletonManager.props(
-        Master.props(workTimeout),
+        TodoManagerActor.props(workTimeout),
         PoisonPill,
         ClusterSingletonManagerSettings(system).withRole("backend")),
       "master")
@@ -126,40 +126,40 @@ class DistributedWorkerSpec(_system: ActorSystem)
       ClusterClient.props(ClusterClientSettings(system).withInitialContacts(initialContacts)),
       "clusterClient")
     for (n <- 1 to 3)
-      workerSystem.actorOf(Worker.props(clusterClient, Props[WorkExecutor], 1.second), "worker-" + n)
-    val flakyWorker = workerSystem.actorOf(Worker.props(clusterClient, Props[FlakyWorkExecutor], 1.second), "flaky-worker")
+      workerSystem.actorOf(TodoWorker.props(clusterClient, Props[WorkExecutor], 1.second), "worker-" + n)
+    val flakyWorker = workerSystem.actorOf(TodoWorker.props(clusterClient, Props[FlakyWorkExecutor], 1.second), "flaky-worker")
 
     Cluster(system).join(clusterAddress)
     clusterProbe.expectMsgType[MemberUp]
-    val frontend = system.actorOf(Props[Frontend], "frontend")
+//    val frontend = system.actorOf(Props[Frontend], "frontend")
 
     val results = TestProbe()
-    DistributedPubSub(system).mediator ! Subscribe(Master.ResultsTopic, results.ref)
+    DistributedPubSub(system).mediator ! Subscribe(TodoManagerActor.ResultsTopic, results.ref)
     expectMsgType[SubscribeAck]
 
     // make sure pub sub topics are replicated over to the backend system before triggering any work
     within(10.seconds) {
       awaitAssert {
         DistributedPubSub(backendSystem).mediator ! GetTopics
-        expectMsgType[CurrentTopics].getTopics() should contain(Master.ResultsTopic)
+        expectMsgType[CurrentTopics].getTopics() should contain(TodoManagerActor.ResultsTopic)
       }
     }
 
     // make sure we can get one piece of work through to fail fast if it doesn't
-    within(10.seconds) {
-      awaitAssert {
-        frontend ! Work("1", 1)
-        expectMsg(Frontend.Ok)
-      }
-    }
-    results.expectMsgType[WorkResult].workId should be("1")
+//    within(10.seconds) {
+//      awaitAssert {
+//        frontend ! Work("1", 1)
+//        expectMsg(Frontend.Ok)
+//      }
+//    }
+//    results.expectMsgType[WorkResult].workId should be("1")
 
 
     // and then send in some actual work
-    for (n <- 2 to 100) {
-      frontend ! Work(n.toString, n)
-      expectMsg(Frontend.Ok)
-    }
+//    for (n <- 2 to 100) {
+//      frontend ! Work(n.toString, n)
+//      expectMsg(Frontend.Ok)
+//    }
 
     results.within(10.seconds) {
       val ids = results.receiveN(99).map { case WorkResult(workId, _) => workId }
