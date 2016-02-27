@@ -62,7 +62,7 @@ object Main extends App
 
     system.actorOf(
       ClusterSingletonManager.props(
-        Manager.props(workTimeout),
+        TodoManagerActor.props(workTimeout),
         PoisonPill,
         ClusterSingletonManagerSettings(system).withRole(role)),
       "master")
@@ -84,7 +84,7 @@ object Main extends App
           .withInitialContacts(initialContacts)),
       "clusterClient")
 
-    system.actorOf(Worker.props(clusterClient, Props[WorkExecutor]), "worker")
+    system.actorOf(TodoWorker.props(clusterClient, Props[WorkExecutor]), "worker")
   }
 
   def startupSharedJournal(system: ActorSystem, startStore: Boolean, path: ActorPath): Unit = {
